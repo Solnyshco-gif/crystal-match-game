@@ -11,15 +11,14 @@
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             font-family: 'Arial', sans-serif;
             color: white;
             overflow: hidden;
             user-select: none;
+            height: 100vh;
         }
-
         .container {
             width: 100vw;
             height: 100vh;
@@ -28,7 +27,6 @@
             align-items: center;
             padding: 10px;
         }
-
         .header {
             display: flex;
             justify-content: space-between;
@@ -42,13 +40,11 @@
             padding: 15px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
-
         .stats {
             display: flex;
             flex-direction: column;
             gap: 5px;
         }
-
         .stat-item {
             display: flex;
             align-items: center;
@@ -56,7 +52,6 @@
             font-size: 14px;
             font-weight: bold;
         }
-
         .stat-value {
             background: rgba(255, 255, 255, 0.2);
             padding: 4px 12px;
@@ -64,7 +59,6 @@
             min-width: 60px;
             text-align: center;
         }
-
         .game-board-container {
             position: relative;
             background: rgba(255, 255, 255, 0.05);
@@ -73,7 +67,6 @@
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
             backdrop-filter: blur(15px);
         }
-
         #game-board {
             display: grid;
             grid-template-columns: repeat(8, 1fr);
@@ -82,7 +75,6 @@
             border-radius: 15px;
             padding: 8px;
         }
-
         .cell {
             width: 45px;
             height: 45px;
@@ -96,23 +88,15 @@
             position: relative;
             overflow: hidden;
         }
-
         .cell::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, transparent 70%);
             opacity: 0;
             transition: opacity 0.3s ease;
         }
-
-        .cell:hover::before {
-            opacity: 1;
-        }
-
+        .cell:hover::before { opacity: 1; }
         .gem {
             width: 35px;
             height: 35px;
@@ -120,293 +104,145 @@
             position: relative;
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transform: translateY(0);
         }
-
         .gem::after {
             content: '';
             position: absolute;
-            top: 2px;
-            left: 2px;
-            right: 2px;
-            bottom: 2px;
+            top: 2px; left: 2px; right: 2px; bottom: 2px;
             background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%);
             border-radius: 8px;
         }
-
         .gem.selected {
             transform: scale(1.2);
             box-shadow: 0 0 25px gold;
             z-index: 10;
         }
+        .gem.exploding { animation: explode 0.6s ease-out forwards; }
+        .gem.falling { animation: fall 0.5s ease-in; }
+        .gem.spawning { animation: spawn 0.5s ease-out; }
 
-        .gem.moving {
-            z-index: 100;
-        }
+        /* Цвета */
+        .gem-1 { background: linear-gradient(135deg, #FF6B6B, #FF8E8E); }
+        .gem-2 { background: linear-gradient(135deg, #4ECDC4, #88D9E6); }
+        .gem-3 { background: linear-gradient(135deg, #FFD166, #FFE8A3); }
+        .gem-4 { background: linear-gradient(135deg, #06D6A0, #6AFFD6); }
+        .gem-5 { background: linear-gradient(135deg, #118AB2, #5BC0EB); }
+        .gem-6 { background: linear-gradient(135deg, #9B5DE5, #C78FFF); }
+        .gem-7 { background: linear-gradient(135deg, #F15BB5, #FFA8E0); }
 
-        .gem.exploding {
-            animation: explode 0.6s ease-out forwards;
-        }
-
-        .gem.falling {
-            animation: fall 0.5s ease-in;
-        }
-
-        .gem.spawning {
-            animation: spawn 0.5s ease-out;
-        }
-
-        /* Цвета кристаллов */
-        .gem-1 { background: linear-gradient(135deg, #FF6B6B, #FF8E8E); } /* Красный */
-        .gem-2 { background: linear-gradient(135deg, #4ECDC4, #88D9E6); } /* Бирюзовый */
-        .gem-3 { background: linear-gradient(135deg, #FFD166, #FFE8A3); } /* Желтый */
-        .gem-4 { background: linear-gradient(135deg, #06D6A0, #6AFFD6); } /* Зеленый */
-        .gem-5 { background: linear-gradient(135deg, #118AB2, #5BC0EB); } /* Синий */
-        .gem-6 { background: linear-gradient(135deg, #9B5DE5, #C78FFF); } /* Фиолетовый */
-        .gem-7 { background: linear-gradient(135deg, #F15BB5, #FFA8E0); } /* Розовый */
-
-        .controls {
-            display: flex;
-            gap: 15px;
-            margin-top: 15px;
-        }
-
+        .controls { display: flex; gap: 15px; margin-top: 15px; }
         .btn {
             background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
-            border: none;
-            border-radius: 20px;
-            color: white;
-            padding: 12px 25px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 8px 20px rgba(255, 107, 107, 0.4);
+            border: none; border-radius: 20px; color: white;
+            padding: 12px 25px; font-size: 16px; font-weight: bold;
+            cursor: pointer; box-shadow: 0 8px 20px rgba(255, 107, 107, 0.4);
             transition: all 0.3s ease;
         }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 25px rgba(255, 107, 107, 0.6);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-        }
-
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(255, 107, 107, 0.6); }
+        .btn:active { transform: translateY(0); }
         .btn-premium {
             background: linear-gradient(135deg, #FFD166, #FFE8A3);
-            color: #333;
-            box-shadow: 0 8px 20px rgba(255, 209, 102, 0.4);
+            color: #333; box-shadow: 0 8px 20px rgba(255, 209, 102, 0.4);
         }
 
-        /* Анимации */
         @keyframes explode {
             0% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.5); opacity: 0.7; }
             100% { transform: scale(0); opacity: 0; }
         }
-
-        @keyframes fall {
-            0% { transform: translateY(-100px); opacity: 0; }
-            100% { transform: translateY(0); opacity: 1; }
+        @keyframes fall { from { transform: translateY(-200px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes spawn { 0% { transform: scale(0) rotate(-180deg); } 70% { transform: scale(1.1) rotate(10deg); } 100% { transform: scale(1) rotate(0); } }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        @keyframes combo-pop {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -120%) scale(0.8); opacity: 0; }
         }
+        @keyframes shimmer { 0% { left: -100%; } 100% { left: 100%; } }
 
-        @keyframes spawn {
-            0% { transform: scale(0) rotate(-180deg); }
-            70% { transform: scale(1.1) rotate(10deg); }
-            100% { transform: scale(1) rotate(0); }
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        /* Эффекты частиц */
         .particle {
-            position: absolute;
-            pointer-events: none;
-            border-radius: 50%;
+            position: absolute; pointer-events: none; border-radius: 50%;
             animation: particle-float 1s ease-out forwards;
         }
-
         @keyframes particle-float {
-            0% {
-                transform: translate(0, 0) scale(1);
-                opacity: 1;
-            }
-            100% {
-                transform: translate(var(--tx), var(--ty)) scale(0);
-                opacity: 0;
-            }
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
         }
 
-        /* Модальные окна */
         .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8); display: flex; align-items: center;
+            justify-content: center; z-index: 1000; backdrop-filter: blur(10px);
         }
-
         .modal-content {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 25px;
-            padding: 30px;
-            text-align: center;
-            max-width: 90%;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            border-radius: 25px; padding: 30px; text-align: center;
+            max-width: 90%; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
             animation: modal-appear 0.5s ease-out;
         }
-
         @keyframes modal-appear {
-            from {
-                transform: scale(0.7) translateY(50px);
-                opacity: 0;
-            }
-            to {
-                transform: scale(1) translateY(0);
-                opacity: 1;
-            }
+            from { transform: scale(0.7) translateY(50px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
         }
 
         .combo-popup {
-            position: absolute;
-            font-size: 24px;
-            font-weight: bold;
-            color: gold;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-            animation: combo-pop 1s ease-out forwards;
-            pointer-events: none;
-            z-index: 100;
-        }
-
-        @keyframes combo-pop {
-            0% {
-                transform: translate(-50%, -50%) scale(0.5);
-                opacity: 0;
-            }
-            50% {
-                transform: translate(-50%, -50%) scale(1.2);
-                opacity: 1;
-            }
-            100% {
-                transform: translate(-50%, -100%) scale(0.8);
-                opacity: 0;
-            }
+            position: absolute; font-size: 24px; font-weight: bold;
+            color: gold; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            animation: combo-pop 1s ease-out forwards; pointer-events: none; z-index: 100;
         }
 
         .level-progress {
-            width: 100%;
-            max-width: 500px;
-            margin-top: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 8px;
+            width: 100%; max-width: 500px; margin-top: 15px;
+            background: rgba(255, 255, 255, 0.1); border-radius: 15px; padding: 8px;
         }
-
         .progress-bar {
-            height: 12px;
-            background: linear-gradient(90deg, #FF6B6B, #4ECDC4, #118AB2);
-            border-radius: 10px;
-            transition: width 0.5s ease;
-            position: relative;
-            overflow: hidden;
+            height: 12px; background: linear-gradient(90deg, #FF6B6B, #4ECDC4, #118AB2);
+            border-radius: 10px; transition: width 0.5s ease; position: relative; overflow: hidden;
         }
-
         .progress-bar::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
             animation: shimmer 2s infinite;
         }
 
-        @keyframes shimmer {
-            0% { left: -100%; }
-            100% { left: 100%; }
+        @media (max-width: 500px) {
+            .cell { width: 35px; height: 35px; }
+            .gem { width: 28px; height: 28px; }
+            .header { padding: 10px; }
+            .btn { padding: 10px 20px; font-size: 14px; }
         }
 
-        /* Адаптивность */
-        @media (max-width: 500px) {
-            .cell {
-                width: 35px;
-                height: 35px;
-            }
-            
-            .gem {
-                width: 28px;
-                height: 28px;
-            }
-            
-            .header {
-                padding: 10px;
-            }
-            
-            .btn {
-                padding: 10px 20px;
-                font-size: 14px;
-            }
-        }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <div class="stats">
-                <div class="stat-item">
-                    <span>🎯 Очки:</span>
-                    <div class="stat-value" id="score">0</div>
-                </div>
-                <div class="stat-item">
-                    <span>⭐ Ходы:</span>
-                    <div class="stat-value" id="moves">25</div>
-                </div>
-                <div class="stat-item">
-                    <span>🏆 Уровень:</span>
-                    <div class="stat-value" id="level">1</div>
-                </div>
+                <div class="stat-item"><span>Очки:</span><div class="stat-value" id="score">0</div></div>
+                <div class="stat-item"><span>Ходы:</span><div class="stat-value" id="moves">25</div></div>
+                <div class="stat-item"><span>Уровень:</span><div class="stat-value" id="level">1</div></div>
             </div>
             <div class="stats">
-                <div class="stat-item">
-                    <span>💎 Цель:</span>
-                    <div class="stat-value" id="target">1000</div>
-                </div>
-                <div class="stat-item">
-                    <span>⚡ Комбо:</span>
-                    <div class="stat-value" id="combo">x1</div>
-                </div>
+                <div class="stat-item"><span>Цель:</span><div class="stat-value" id="target">1000</div></div>
+                <div class="stat-item"><span>Комбо:</span><div class="stat-value" id="combo">x1</div></div>
             </div>
         </div>
-
         <div class="game-board-container">
             <div id="game-board"></div>
         </div>
-
-        <div class="level-progress">
-            <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
-        </div>
-
+        <div class="level-progress"><div class="progress-bar" id="progress-bar"></div></div>
         <div class="controls">
-            <button class="btn" id="hint-btn">💡 Подсказка</button>
-            <button class="btn btn-premium" id="premium-btn">🌟 ПРЕМИУМ</button>
-            <button class="btn" id="restart-btn">🔄 Заново</button>
+            <button class="btn" id="hint-btn">Подсказка</button>
+            <button class="btn btn-premium" id="premium-btn">ПРЕМИУМ</button>
+            <button class="btn" id="restart-btn">Заново</button>
         </div>
     </div>
 
     <div id="win-modal" class="modal hidden">
         <div class="modal-content">
-            <h2>🎉 Победа! 🎉</h2>
+            <h2>Победа!</h2>
             <p>Вы прошли уровень!</p>
             <p>Очки: <span id="final-score">0</span></p>
             <p>Комбо: x<span id="final-combo">1</span></p>
@@ -415,590 +251,512 @@
     </div>
 
     <script>
-        // ===== ИНИЦИАЛИЗАЦИЯ TELEGRAM WEB APP =====
-const tg = window.Telegram.WebApp;
-tg.expand();
-tg.BackButton.hide();
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.BackButton.hide();
 
-// ===== КОНСТАНТЫ И ПЕРЕМЕННЫЕ =====
-const BOARD_SIZE = 8;
-const GEM_TYPES = 7;
-const LEVEL_TARGETS = [1000, 2500, 5000, 10000, 20000];
-const LEVEL_MOVES = [25, 22, 20, 18, 15];
+        const BOARD_SIZE = 8;
+        const GEM_TYPES = 7;
+        const LEVEL_TARGETS = [1000, 2500, 5000, 10000, 20000];
+        const LEVEL_MOVES = [25, 22, 20, 18, 15];
 
-let gameState = {
-    score: 0,
-    moves: 25,
-    level: 1,
-    target: 1000,
-    combo: 1,
-    comboMultiplier: 1,
-    selectedGem: null,
-    board: [],
-    isAnimating: false,
-    premium: false,
-    gameStarted: false // ДОБАВИЛИ ФЛАГ СТАРТА ИГРЫ
-};
+        const gameState = {
+            score: 0,
+            moves: 25,
+            level: 1,
+            target: 1000,
+            combo: 1,
+            comboMultiplier: 1,
+            selectedGem: null,
+            board: [],
+            isAnimating: false,
+            premium: false,
+            gameStarted: false
+        };
 
-// ===== ЭЛЕМЕНТЫ DOM =====
-const gameBoard = document.getElementById('game-board');
-const scoreElement = document.getElementById('score');
-const movesElement = document.getElementById('moves');
-const levelElement = document.getElementById('level');
-const targetElement = document.getElementById('target');
-const comboElement = document.getElementById('combo');
-const progressBar = document.getElementById('progress-bar');
-const winModal = document.getElementById('win-modal');
-const finalScoreElement = document.getElementById('final-score');
-const finalComboElement = document.getElementById('final-combo');
+        const elements = {
+            gameBoard: document.getElementById('game-board'),
+            score: document.getElementById('score'),
+            moves: document.getElementById('moves'),
+            level: document.getElementById('level'),
+            target: document.getElementById('target'),
+            combo: document.getElementById('combo'),
+            progressBar: document.getElementById('progress-bar'),
+            winModal: document.getElementById('win-modal'),
+            finalScore: document.getElementById('final-score'),
+            finalCombo: document.getElementById('final-combo'),
+            hintBtn: document.getElementById('hint-btn'),
+            premiumBtn: document.getElementById('premium-btn'),
+            restartBtn: document.getElementById('restart-btn'),
+            nextLevelBtn: document.getElementById('next-level-btn')
+        };
 
-// ===== ИНИЦИАЛИЗАЦИЯ ИГРЫ =====
-function initGame() {
-    createBoard();
-    renderBoard();
-    updateUI();
-    
-    // Скрываем модальное окно победы при запуске
-    winModal.classList.add('hidden');
-    
-    // Проверка премиум-статуса
-    checkPremiumStatus();
-}
-
-function createBoard() {
-    gameState.board = [];
-    for (let row = 0; row < BOARD_SIZE; row++) {
-        gameState.board[row] = [];
-        for (let col = 0; col < BOARD_SIZE; col++) {
-            let gemType;
-            do {
-                gemType = Math.floor(Math.random() * GEM_TYPES) + 1;
-            } while (hasMatchAt(row, col, gemType));
-            
-            gameState.board[row][col] = gemType;
-        }
-    }
-    
-    // Проверка на возможные ходы
-    if (!hasPossibleMoves()) {
-        createBoard();
-    }
-}
-
-function hasMatchAt(row, col, gemType) {
-    // Проверка горизонтальных совпадений
-    if (col >= 2 && 
-        gameState.board[row][col-1] === gemType && 
-        gameState.board[row][col-2] === gemType) {
-        return true;
-    }
-    
-    // Проверка вертикальных совпадений
-    if (row >= 2 && 
-        gameState.board[row-1] && 
-        gameState.board[row-1][col] === gemType && 
-        gameState.board[row-2][col] === gemType) {
-        return true;
-    }
-    
-    return false;
-}
-
-function renderBoard() {
-    gameBoard.innerHTML = '';
-    
-    for (let row = 0; row < BOARD_SIZE; row++) {
-        for (let col = 0; col < BOARD_SIZE; col++) {
-            const cell = document.createElement('div');
-            cell.className = 'cell';
-            cell.dataset.row = row;
-            cell.dataset.col = col;
-            
-            const gem = document.createElement('div');
-            gem.className = `gem gem-${gameState.board[row][col]}`;
-            gem.dataset.type = gameState.board[row][col];
-            
-            cell.appendChild(gem);
-            gameBoard.appendChild(cell);
-            
-            // Обработчик клика
-            cell.addEventListener('click', () => handleCellClick(row, col));
-        }
-    }
-}
-
-// ===== ОСНОВНАЯ ИГРОВАЯ ЛОГИКА =====
-function handleCellClick(row, col) {
-    if (gameState.isAnimating || gameState.moves <= 0) return;
-    
-    // Отмечаем что игра началась
-    if (!gameState.gameStarted) {
-        gameState.gameStarted = true;
-    }
-    
-    const clickedGem = { row, col, type: gameState.board[row][col] };
-    
-    if (!gameState.selectedGem) {
-        // Первый выбор
-        gameState.selectedGem = clickedGem;
-        selectGem(row, col);
-    } else {
-        // Второй выбор - попытка обмена
-        const selected = gameState.selectedGem;
-        
-        // Проверка соседства
-        if (areNeighbors(selected, clickedGem)) {
-            gameState.isAnimating = true;
-            swapGems(selected, clickedGem).then(success => {
-                if (!success) {
-                    // Если обмен не привел к матчу, возвращаем обратно
-                    swapGems(clickedGem, selected);
-                } else {
-                    // Успешный обмен - тратим ход
-                    gameState.moves--;
-                    updateUI();
-                    checkWinCondition();
-                }
-                gameState.selectedGem = null;
-                gameState.isAnimating = false;
-            });
-        } else {
-            // Выбор другой фишки
-            clearSelection();
-            gameState.selectedGem = clickedGem;
-            selectGem(row, col);
-        }
-    }
-}
-
-function areNeighbors(gem1, gem2) {
-    const rowDiff = Math.abs(gem1.row - gem2.row);
-    const colDiff = Math.abs(gem1.col - gem2.col);
-    return (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1);
-}
-
-function selectGem(row, col) {
-    const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
-    const gem = cell.querySelector('.gem');
-    gem.classList.add('selected');
-}
-
-function clearSelection() {
-    document.querySelectorAll('.gem.selected').forEach(gem => {
-        gem.classList.remove('selected');
-    });
-}
-
-async function swapGems(gem1, gem2) {
-    // Визуальный обмен
-    await animateSwap(gem1, gem2);
-    
-    // Логический обмен
-    const temp = gameState.board[gem1.row][gem1.col];
-    gameState.board[gem1.row][gem1.col] = gameState.board[gem2.row][gem2.col];
-    gameState.board[gem2.row][gem2.col] = temp;
-    
-    // Проверка матчей
-    const matches = findMatches();
-    if (matches.length > 0) {
-        await processMatches(matches);
-        return true;
-    } else {
-        // Возвращаем обратно
-        const temp = gameState.board[gem1.row][gem1.col];
-        gameState.board[gem1.row][gem1.col] = gameState.board[gem2.row][gem2.col];
-        gameState.board[gem2.row][gem2.col] = temp;
-        
-        await animateSwap(gem2, gem1);
-        return false;
-    }
-}
-
-function animateSwap(gem1, gem2) {
-    return new Promise(resolve => {
-        const cell1 = document.querySelector(`.cell[data-row="${gem1.row}"][data-col="${gem1.col}"] .gem`);
-        const cell2 = document.querySelector(`.cell[data-row="${gem2.row}"][data-col="${gem2.col}"] .gem`);
-        
-        cell1.style.transform = `translate(${(gem2.col - gem1.col) * 100}%, ${(gem2.row - gem1.row) * 100}%)`;
-        cell2.style.transform = `translate(${(gem1.col - gem2.col) * 100}%, ${(gem1.row - gem2.row) * 100}%)`;
-        
-        setTimeout(() => {
-            cell1.style.transform = '';
-            cell2.style.transform = '';
+        function initGame() {
+            createBoard();
             renderBoard();
-            resolve();
-        }, 300);
-    });
-}
+            updateUI();
+            elements.winModal.classList.add('hidden');
+            checkPremiumStatus();
+        }
 
-function findMatches() {
-    const matches = [];
-    
-    // Проверка горизонтальных матчей
-    for (let row = 0; row < BOARD_SIZE; row++) {
-        for (let col = 0; col < BOARD_SIZE - 2; col++) {
-            const gemType = gameState.board[row][col];
-            if (gemType && 
-                gemType === gameState.board[row][col+1] && 
-                gemType === gameState.board[row][col+2]) {
-                
-                let matchLength = 3;
-                while (col + matchLength < BOARD_SIZE && gameState.board[row][col+matchLength] === gemType) {
-                    matchLength++;
+        function createBoard() {
+            gameState.board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    let type;
+                    do { type = Math.floor(Math.random() * GEM_TYPES) + 1; }
+                    while (hasMatchAt(row, col, type));
+                    gameState.board[row][col] = type;
                 }
-                
-                matches.push({
-                    row: row,
-                    col: col,
-                    length: matchLength,
-                    horizontal: true,
-                    type: gemType
+            }
+            if (!hasPossibleMoves()) createBoard();
+        }
+
+        function hasMatchAt(row, col, type) {
+            if (col >= 2 && gameState.board[row][col-1] === type && gameState.board[row][col-2] === type) return true;
+            if (row >= 2 && gameState.board[row-1][col] === type && gameState.board[row-2][col] === type) return true;
+            return false;
+        }
+
+        function renderBoard() {
+            elements.gameBoard.innerHTML = '';
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    const type = gameState.board[row][col];
+                    if (!type) continue;
+
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+
+                    const gem = document.createElement('div');
+                    gem.className = `gem gem-${type}`;
+                    gem.dataset.type = type;
+
+                    cell.appendChild(gem);
+                    elements.gameBoard.appendChild(cell);
+
+                    cell.addEventListener('click', () => handleCellClick(row, col));
+                }
+            }
+        }
+
+        function handleCellClick(row, col) {
+            if (gameState.isAnimating || gameState.moves <= 0) return;
+            if (!gameState.gameStarted) gameState.gameStarted = true;
+
+            const clicked = { row, col, type: gameState.board[row][col] };
+
+            if (!gameState.selectedGem) {
+                gameState.selectedGem = clicked;
+                selectGem(row, col);
+            } else if (areNeighbors(gameState.selectedGem, clicked)) {
+                gameState.isAnimating = true;
+                swapGems(gameState.selectedGem, clicked).then(success => {
+                    if (!success) swapGems(clicked, gameState.selectedGem);
+                    else {
+                        gameState.moves--;
+                        updateUI();
+                        checkWinCondition();
+                    }
+                    gameState.selectedGem = null;
+                    gameState.isAnimating = false;
                 });
-                
-                col += matchLength - 1;
+            } else {
+                clearSelection();
+                gameState.selectedGem = clicked;
+                selectGem(row, col);
             }
         }
-    }
-    
-    // Проверка вертикальных матчей
-    for (let col = 0; col < BOARD_SIZE; col++) {
-        for (let row = 0; row < BOARD_SIZE - 2; row++) {
-            const gemType = gameState.board[row][col];
-            if (gemType && 
-                gameState.board[row+1] && 
-                gemType === gameState.board[row+1][col] && 
-                gemType === gameState.board[row+2][col]) {
-                
-                let matchLength = 3;
-                while (row + matchLength < BOARD_SIZE && gameState.board[row+matchLength] && gameState.board[row+matchLength][col] === gemType) {
-                    matchLength++;
-                }
-                
-                matches.push({
-                    row: row,
-                    col: col,
-                    length: matchLength,
-                    horizontal: false,
-                    type: gemType
+
+        function areNeighbors(a, b) {
+            return (Math.abs(a.row - b.row) + Math.abs(a.col - b.col)) === 1;
+        }
+
+        function selectGem(row, col) {
+            const gem = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"] .gem`);
+            if (gem) gem.classList.add('selected');
+        }
+
+        function clearSelection() {
+            document.querySelectorAll('.gem.selected').forEach(g => g.classList.remove('selected'));
+        }
+
+        async function swapGems(g1, g2) {
+            await animateSwap(g1, g2);
+            [gameState.board[g1.row][g1.col], gameState.board[g2.row][g2.col]] =
+            [gameState.board[g2.row][g2.col], gameState.board[g1.row][g1.col]];
+
+            const matches = findMatches();
+            if (matches.length > 0) {
+                await processMatches(matches);
+                return true;
+            } else {
+                [gameState.board[g1.row][g1.col], gameState.board[g2.row][g2.col]] =
+                [gameState.board[g2.row][g2.col], gameState.board[g1.row][g1.col]];
+                await animateSwap(g2, g1);
+                return false;
+            }
+        }
+
+        function animateSwap(g1, g2) {
+            return new Promise(resolve => {
+                const cell1 = document.querySelector(`.cell[data-row="${g1.row}"][data-col="${g1.col}"]`);
+                const cell2 = document.querySelector(`.cell[data-row="${g2.row}"][data-col="${g2.col}"]`);
+                const rect1 = cell1.getBoundingClientRect();
+                const rect2 = cell2.getBoundingClientRect();
+
+                const dx = rect2.left - rect1.left;
+                const dy = rect2.top - rect1.top;
+
+                const gem1 = cell1.querySelector('.gem');
+                const gem2 = cell2.querySelector('.gem');
+
+                gem1.style.position = 'fixed';
+                gem1.style.left = rect1.left + 'px';
+                gem1.style.top = rect1.top + 'px';
+                gem1.style.zIndex = 100;
+
+                gem2.style.position = 'fixed';
+                gem2.style.left = rect2.left + 'px';
+                gem2.style.top = rect2.top + 'px';
+                gem2.style.zIndex = 100;
+
+                requestAnimationFrame(() => {
+                    gem1.style.transform = `translate(${dx}px, ${dy}px)`;
+                    gem2.style.transform = `translate(${-dx}px, ${-dy}px)`;
                 });
-                
-                row += matchLength - 1;
-            }
-        }
-    }
-    
-    return matches;
-}
 
-async function processMatches(matches) {
-    if (matches.length === 0) return;
-    
-    // Увеличиваем комбо
-    gameState.comboMultiplier += 0.2;
-    gameState.combo = Math.floor(gameState.comboMultiplier);
-    
-    // Взрыв матчей и подсчет очков
-    let totalScore = 0;
-    const explodingGems = new Set();
-    
-    matches.forEach(match => {
-        const points = match.length * 100 * gameState.combo;
-        totalScore += points;
-        
-        for (let i = 0; i < match.length; i++) {
-            const row = match.horizontal ? match.row : match.row + i;
-            const col = match.horizontal ? match.col + i : match.col;
-            
-            const key = `${row},${col}`;
-            if (!explodingGems.has(key)) {
-                explodingGems.add(key);
-                explodeGem(row, col, match.type);
-            }
-        }
-        
-        // Показ комбо-попапа
-        showComboPopup(match);
-    });
-    
-    // Добавление очков
-    gameState.score += totalScore;
-    
-    // Ждем завершения анимации взрыва
-    await new Promise(resolve => setTimeout(resolve, 600));
-    
-    // Удаление взорванных фишек и заполнение пустот
-    await fillEmptySpaces();
-    
-    // Проверка новых матчей после заполнения
-    const newMatches = findMatches();
-    if (newMatches.length > 0) {
-        await processMatches(newMatches);
-    } else {
-        // Сброс комбо если цепочка завершена
-        gameState.comboMultiplier = 1;
-        gameState.combo = 1;
-    }
-    
-    updateUI();
-}
-
-function explodeGem(row, col, type) {
-    const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
-    if (!cell) return;
-    
-    const gem = cell.querySelector('.gem');
-    if (gem) {
-        gem.classList.add('exploding');
-        
-        // Создание частиц
-        createParticles(cell, type);
-        
-        setTimeout(() => {
-            gameState.board[row][col] = 0;
-        }, 300);
-    }
-}
-
-function createParticles(cell, type) {
-    const rect = cell.getBoundingClientRect();
-    const color = getComputedStyle(cell.querySelector('.gem')).background;
-    
-    for (let i = 0; i < 8; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        particle.style.background = color;
-        particle.style.width = '8px';
-        particle.style.height = '8px';
-        particle.style.left = rect.left + rect.width / 2 + 'px';
-        particle.style.top = rect.top + rect.height / 2 + 'px';
-        
-        const angle = (i / 8) * Math.PI * 2;
-        const distance = 50 + Math.random() * 50;
-        particle.style.setProperty('--tx', Math.cos(angle) * distance + 'px');
-        particle.style.setProperty('--ty', Math.sin(angle) * distance + 'px');
-        
-        document.body.appendChild(particle);
-        
-        setTimeout(() => {
-            particle.remove();
-        }, 1000);
-    }
-}
-
-function showComboPopup(match) {
-    const cell = document.querySelector(`.cell[data-row="${match.row}"][data-col="${match.col}"]`);
-    const rect = cell.getBoundingClientRect();
-    
-    const popup = document.createElement('div');
-    popup.className = 'combo-popup';
-    popup.textContent = `COMBO x${gameState.combo}!`;
-    popup.style.left = rect.left + rect.width / 2 + 'px';
-    popup.style.top = rect.top + rect.height / 2 + 'px';
-    
-    document.body.appendChild(popup);
-    
-    setTimeout(() => {
-        popup.remove();
-    }, 1000);
-}
-
-async function fillEmptySpaces() {
-    // Падение фишек сверху
-    for (let col = 0; col < BOARD_SIZE; col++) {
-        let emptySpaces = 0;
-        
-        for (let row = BOARD_SIZE - 1; row >= 0; row--) {
-            if (gameState.board[row][col] === 0) {
-                emptySpaces++;
-            } else if (emptySpaces > 0) {
-                // Перемещаем фишку вниз
-                gameState.board[row + emptySpaces][col] = gameState.board[row][col];
-                gameState.board[row][col] = 0;
-                
-                const cell = document.querySelector(`.cell[data-row="${row + emptySpaces}"][data-col="${col}"] .gem`);
-                if (cell) {
-                    cell.classList.add('falling');
-                }
-            }
-        }
-        
-        // Заполнение пустот новыми фишками сверху
-        for (let row = 0; row < emptySpaces; row++) {
-            gameState.board[row][col] = Math.floor(Math.random() * GEM_TYPES) + 1;
-            
-            const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"] .gem`);
-            if (cell) {
-                cell.classList.add('spawning');
-            }
-        }
-    }
-    
-    renderBoard();
-    await new Promise(resolve => setTimeout(resolve, 500));
-}
-
-// ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
-function hasPossibleMoves() {
-    // Простая проверка возможных ходов
-    for (let row = 0; row < BOARD_SIZE; row++) {
-        for (let col = 0; col < BOARD_SIZE - 1; col++) {
-            // Проверка горизонтального обмена
-            [gameState.board[row][col], gameState.board[row][col+1]] = 
-            [gameState.board[row][col+1], gameState.board[row][col]];
-            
-            if (findMatches().length > 0) {
-                [gameState.board[row][col], gameState.board[row][col+1]] = 
-                [gameState.board[row][col+1], gameState.board[row][col]];
-                return true;
-            }
-            
-            [gameState.board[row][col], gameState.board[row][col+1]] = 
-            [gameState.board[row][col+1], gameState.board[row][col]];
-        }
-    }
-    
-    for (let col = 0; col < BOARD_SIZE; col++) {
-        for (let row = 0; row < BOARD_SIZE - 1; row++) {
-            // Проверка вертикального обмена
-            [gameState.board[row][col], gameState.board[row+1][col]] = 
-            [gameState.board[row+1][col], gameState.board[row][col]];
-            
-            if (findMatches().length > 0) {
-                [gameState.board[row][col], gameState.board[row+1][col]] = 
-                [gameState.board[row+1][col], gameState.board[row][col]];
-                return true;
-            }
-            
-            [gameState.board[row][col], gameState.board[row+1][col]] = 
-            [gameState.board[row+1][col], gameState.board[row][col]];
-        }
-    }
-    
-    return false;
-}
-
-function updateUI() {
-    scoreElement.textContent = gameState.score;
-    movesElement.textContent = gameState.moves;
-    levelElement.textContent = gameState.level;
-    targetElement.textContent = gameState.target;
-    comboElement.textContent = `x${gameState.combo}`;
-    
-    // Обновление прогресс-бара
-    const progress = Math.min((gameState.score / gameState.target) * 100, 100);
-    progressBar.style.width = `${progress}%`;
-}
-
-function checkWinCondition() {
-    // ВАЖНО: Проверяем победу только если игра началась и очки достигли цели
-    if (gameState.gameStarted && gameState.score >= gameState.target) {
-        showWinModal();
-    } else if (gameState.moves <= 0) {
-        setTimeout(() => {
-            alert('Ходы закончились! Попробуйте еще раз.');
-            resetGame();
-        }, 500);
-    }
-}
-
-function showWinModal() {
-    finalScoreElement.textContent = gameState.score;
-    finalComboElement.textContent = gameState.combo;
-    winModal.classList.remove('hidden');
-}
-
-function nextLevel() {
-    gameState.level++;
-    gameState.target = LEVEL_TARGETS[gameState.level - 1] || (gameState.level * 2000);
-    gameState.moves = LEVEL_MOVES[gameState.level - 1] || 15;
-    gameState.score = 0;
-    gameState.combo = 1;
-    gameState.comboMultiplier = 1;
-    gameState.gameStarted = false; // Сбрасываем флаг старта
-    
-    createBoard();
-    renderBoard();
-    updateUI();
-    winModal.classList.add('hidden');
-}
-
-function resetGame() {
-    gameState.score = 0;
-    gameState.moves = LEVEL_MOVES[gameState.level - 1] || 25;
-    gameState.combo = 1;
-    gameState.comboMultiplier = 1;
-    gameState.gameStarted = false;
-    
-    createBoard();
-    renderBoard();
-    updateUI();
-    winModal.classList.add('hidden');
-}
-
-function checkPremiumStatus() {
-    // В реальной игре здесь запрос к бэкенду
-    // gameState.premium = await checkUserPremiumStatus(tg.initDataUnsafe.user.id);
-    
-    if (gameState.premium) {
-        document.getElementById('premium-btn').textContent = '🌟 ПРЕМИУМ';
-    }
-}
-
-function showHint() {
-    if (gameState.moves <= 0 || gameState.isAnimating) return;
-    
-    // Поиск возможного хода
-    for (let row = 0; row < BOARD_SIZE; row++) {
-        for (let col = 0; col < BOARD_SIZE - 1; col++) {
-            [gameState.board[row][col], gameState.board[row][col+1]] = 
-            [gameState.board[row][col+1], gameState.board[row][col]];
-            
-            if (findMatches().length > 0) {
-                [gameState.board[row][col], gameState.board[row][col+1]] = 
-                [gameState.board[row][col+1], gameState.board[row][col]];
-                
-                // Подсветка подсказки
-                const cell1 = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
-                const cell2 = document.querySelector(`.cell[data-row="${row}"][data-col="${col+1}"]`);
-                
-                cell1.style.animation = 'pulse 1s infinite';
-                cell2.style.animation = 'pulse 1s infinite';
-                
                 setTimeout(() => {
-                    cell1.style.animation = '';
-                    cell2.style.animation = '';
-                }, 2000);
-                
-                return;
-            }
-            
-            [gameState.board[row][col], gameState.board[row][col+1]] = 
-            [gameState.board[row][col+1], gameState.board[row][col]];
+                    gem1.style.position = ''; gem1.style.transform = ''; gem1.style.zIndex = '';
+                    gem2.style.position = ''; gem2.style.transform = ''; gem2.style.zIndex = '';
+                    renderBoard();
+                    resolve();
+                }, 300);
+            });
         }
-    }
-}
 
-// ===== ОБРАБОТЧИКИ СОБЫТИЙ =====
-document.getElementById('hint-btn').addEventListener('click', showHint);
-document.getElementById('restart-btn').addEventListener('click', resetGame);
-document.getElementById('next-level-btn').addEventListener('click', nextLevel);
-document.getElementById('premium-btn').addEventListener('click', () => {
-    tg.showPopup({
-        title: 'Премиум Подписка',
-        message: 'Получите неограниченные подсказки, эксклюзивные кристаллы и отключите рекламу!',
-        buttons: [
-            { id: 'buy', type: 'default', text: 'Купить за 299₽/мес' },
-            { type: 'cancel' }
-        ]
-    });
-});
+        function findMatches() {
+            const matches = [];
+            const visited = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(false));
 
-// ===== ЗАПУСК ИГРЫ =====
-initGame();
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    if (visited[row][col]) continue;
+                    const type = gameState.board[row][col];
+                    if (!type) continue;
 
-// Симуляция рекламы (для бесплатных пользователей)
-setInterval(() => {
-    if (!gameState.premium && !document.querySelector('.modal:not(.hidden)')) {
-        console.log('Показ рекламы...');
-    }
-}, 60000);
+                    // Horizontal
+                    let hLen = 1;
+                    while (col + hLen < BOARD_SIZE && gameState.board[row][col + hLen] === type) hLen++;
+                    if (hLen >= 3) {
+                        matches.push({ row, col, length: hLen, horizontal: true, type });
+                        for (let i = 0; i < hLen; i++) visited[row][col + i] = true;
+                        col += hLen - 1;
+                    }
+
+                    // Vertical
+                    let vLen = 1;
+                    while (row + vLen < BOARD_SIZE && gameState.board[row + vLen][col] === type) vLen++;
+                    if (vLen >= 3) {
+                        matches.push({ row, col, length: vLen, horizontal: false, type });
+                        for (let i = 0; i < vLen; i++) visited[row + i][col] = true;
+                        row += vLen - 1;
+                    }
+                }
+            }
+            return matches;
+        }
+
+        async function processMatches(matches) {
+            if (!matches.length) return;
+
+            gameState.comboMultiplier += 0.2;
+            gameState.combo = Math.floor(gameState.comboMultiplier * 10) / 10;
+
+            let totalScore = 0;
+            const exploding = new Set();
+
+            matches.forEach(m => {
+                const points = m.length * 100 * gameState.combo;
+                totalScore += points;
+                for (let i = 0; i < m.length; i++) {
+                    const r = m.horizontal ? m.row : m.row + i;
+                    const c = m.horizontal ? m.col + i : m.col;
+                    const key = `${r},${c}`;
+                    if (!exploding.has(key)) {
+                        exploding.add(key);
+                        explodeGem(r, c);
+                    }
+                }
+                showComboPopup(m);
+            });
+
+            gameState.score += Math.floor(totalScore);
+            await new Promise(r => setTimeout(r, 600));
+            await dropGems();
+            await spawnNewGems();
+
+            const newMatches = findMatches();
+            if (newMatches.length > 0) {
+                await processMatches(newMatches);
+            } else {
+                gameState.combo = 1;
+                gameState.comboMultiplier = 1;
+            }
+            updateUI();
+        }
+
+        function explodeGem(row, col) {
+            const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+            if (!cell) return;
+            const gem = cell.querySelector('.gem');
+            if (gem) {
+                gem.classList.add('exploding');
+                createParticles(cell);
+                setTimeout(() => { gameState.board[row][col] = 0; }, 300);
+            }
+        }
+
+        function createParticles(cell) {
+            const rect = cell.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const color = getComputedStyle(cell.querySelector('.gem')).background;
+
+            for (let i = 0; i < 10; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.background = color;
+                p.style.width = p.style.height = '6px';
+                p.style.left = centerX + 'px';
+                p.style.top = centerY + 'px';
+
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 30 + Math.random() * 70;
+                p.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+                p.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
+
+                document.body.appendChild(p);
+                setTimeout(() => p.remove(), 1000);
+            }
+        }
+
+        function showComboPopup(match) {
+            const cell = document.querySelector(`.cell[data-row="${match.row}"][data-col="${match.col}"]`);
+            if (!cell) return;
+            const rect = cell.getBoundingClientRect();
+            const popup = document.createElement('div');
+            popup.className = 'combo-popup';
+            popup.textContent = `x${gameState.combo}!`;
+            popup.style.left = (rect.left + rect.width / 2) + 'px';
+            popup.style.top = (rect.top + rect.height / 2) + 'px';
+            document.body.appendChild(popup);
+            setTimeout(() => popup.remove(), 1000);
+        }
+
+        async function dropGems() {
+            let moved = false;
+            for (let col = 0; col < BOARD_SIZE; col++) {
+                let writePos = BOARD_SIZE - 1;
+                for (let row = BOARD_SIZE - 1; row >= 0; row--) {
+                    if (gameState.board[row][col] !== 0) {
+                        if (row !== writePos) {
+                            gameState.board[writePos][col] = gameState.board[row][col];
+                            gameState.board[row][col] = 0;
+                            moved = true;
+                            const gem = document.querySelector(`.cell[data-row="${writePos}"][data-col="${col}"] .gem`);
+                            if (gem) gem.classList.add('falling');
+                        }
+                        writePos--;
+                    }
+                }
+            }
+            if (moved) {
+                renderBoard();
+                await new Promise(r => setTimeout(r, 500));
+            }
+        }
+
+        async function spawnNewGems() {
+            let spawned = false;
+            for (let col = 0; col < BOARD_SIZE; col++) {
+                for (let row = 0; row < BOARD_SIZE; row++) {
+                    if (gameState.board[row][col] === 0) {
+                        gameState.board[row][col] = Math.floor(Math.random() * GEM_TYPES) + 1;
+                        spawned = true;
+                        setTimeout(() => {
+                            const gem = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"] .gem`);
+                            if (gem) gem.classList.add('spawning');
+                        }, 50);
+                    }
+                }
+            }
+            if (spawned) {
+                renderBoard();
+                await new Promise(r => setTimeout(r, 500));
+            }
+        }
+
+        function hasPossibleMoves() {
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (c < BOARD_SIZE - 1) {
+                        swapTemp(r, c, r, c+1);
+                        if (findMatches().length > 0) { revertTemp(r, c, r, c+1); return true; }
+                        revertTemp(r, c, r, c+1);
+                    }
+                    if (r < BOARD_SIZE - 1) {
+                        swapTemp(r, c, r+1, c);
+                        if (findMatches().length > 0) { revertTemp(r, c, r+1, c); return true; }
+                        revertTemp(r, c, r+1, c);
+                    }
+                }
+            }
+            return false;
+        }
+        let tempA, tempB;
+        function swapTemp(r1, c1, r2, c2) {
+            tempA = gameState.board[r1][c1];
+            tempB = gameState.board[r2][c2];
+            gameState.board[r1][c1] = tempB;
+            gameState.board[r2][c2] = tempA;
+        }
+        function revertTemp(r1, c1, r2, c2) {
+            gameState.board[r1][c1] = tempA;
+            gameState.board[r2][c2] = tempB;
+        }
+
+        function updateUI() {
+            elements.score.textContent = gameState.score;
+            elements.moves.textContent = gameState.moves;
+            elements.level.textContent = gameState.level;
+            elements.target.textContent = gameState.target;
+            elements.combo.textContent = `x${gameState.combo}`;
+            const progress = Math.min((gameState.score / gameState.target) * 100, 100);
+            elements.progressBar.style.width = `${progress}%`;
+        }
+
+        function checkWinCondition() {
+            if (gameState.gameStarted && gameState.score >= gameState.target) {
+                showWinModal();
+            } else if (gameState.moves <= 0 && gameState.gameStarted) {
+                setTimeout(() => {
+                    alert('Ходы закончились! Попробуйте ещё раз.');
+                    resetGame();
+                }, 500);
+            }
+        }
+
+        function showWinModal() {
+            elements.finalScore.textContent = gameState.score;
+            elements.finalCombo.textContent = gameState.combo;
+            elements.winModal.classList.remove('hidden');
+        }
+
+        function nextLevel() {
+            gameState.level++;
+            gameState.target = LEVEL_TARGETS[gameState.level - 1] || gameState.level * 2000;
+            gameState.moves = LEVEL_MOVES[gameState.level - 1] || 15;
+            gameState.score = 0;
+            gameState.combo = 1;
+            gameState.comboMultiplier = 1;
+            gameState.gameStarted = false;
+            createBoard();
+            renderBoard();
+            updateUI();
+            elements.winModal.classList.add('hidden');
+        }
+
+        function resetGame() {
+            gameState.score = 0;
+            gameState.moves = LEVEL_MOVES[gameState.level - 1] || 25;
+            gameState.combo = 1;
+            gameState.comboMultiplier = 1;
+            gameState.gameStarted = false;
+            createBoard();
+            renderBoard();
+            updateUI();
+            elements.winModal.classList.add('hidden');
+        }
+
+        function showHint() {
+            if (gameState.isAnimating || gameState.moves <= 0) return;
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (c < BOARD_SIZE - 1) {
+                        swapTemp(r, c, r, c+1);
+                        if (findMatches().length > 0) {
+                            revertTemp(r, c, r, c+1);
+                            pulseCells(r, c, r, c+1);
+                            return;
+                        }
+                        revertTemp(r, c, r, c+1);
+                    }
+                    if (r < BOARD_SIZE - 1) {
+                        swapTemp(r, c, r+1, c);
+                        if (findMatches().length > 0) {
+                            revertTemp(r, c, r+1, c);
+                            pulseCells(r, c, r+1, c);
+                            return;
+                        }
+                        revertTemp(r, c, r+1, c);
+                    }
+                }
+            }
+        }
+
+        function pulseCells(r1, c1, r2, c2) {
+            const cell1 = document.querySelector(`.cell[data-row="${r1}"][data-col="${c1}"]`);
+            const cell2 = document.querySelector(`.cell[data-row="${r2}"][data-col="${c2}"]`);
+            [cell1, cell2].forEach(cell => {
+                if (cell) cell.style.animation = 'pulse 1s infinite';
+            });
+            setTimeout(() => {
+                [cell1, cell2].forEach(cell => {
+                    if (cell) cell.style.animation = '';
+                });
+            }, 2000);
+        }
+
+        function checkPremiumStatus() {
+            // В реальности — запрос к бэкенду
+            setTimeout(() => {
+                if (tg.initDataUnsafe.user?.id === 123456) {
+                    gameState.premium = true;
+                    elements.premiumBtn.textContent = 'ПРЕМИУМ АКТИВЕН';
+                }
+            }, 100);
+        }
+
+        // === События ===
+        elements.hintBtn.addEventListener('click', showHint);
+        elements.restartBtn.addEventListener('click', resetGame);
+        elements.nextLevelBtn.addEventListener('click', nextLevel);
+        elements.premiumBtn.addEventListener('click', () => {
+            tg.showPopup({
+                title: 'Премиум Подписка',
+                message: 'Неограниченные подсказки, без рекламы, эксклюзивные кристаллы!',
+                buttons: [
+                    { id: 'buy', type: 'default', text: 'Купить за 299₽/мес' },
+                    { type: 'cancel', text: 'Отмена' }
+                ]
+            }, (btn) => {
+                if (btn === 'buy') {
+                    tg.openInvoice('https://example.com/invoice');
+                }
+            });
+        });
+
+        // Реклама (для теста)
+        setInterval(() => {
+            if (!gameState.premium && !document.querySelector('.modal:not(.hidden)')) {
+                console.log('Показ рекламы...');
+            }
+        }, 60000);
+
+        initGame();
+    </script>
+</body>
+</html>
