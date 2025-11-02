@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Crystal Match</title>
+    <title>Crystal Match PRO</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root { --bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%); --c:45px; --g:35px; }
@@ -21,10 +21,10 @@
         .stat-value { background:#fff2; padding:4px 12px; border-radius:15px; min-width:60px; text-align:center; }
 
         #game-board { display:grid; grid-template-columns:repeat(8,1fr); gap:4px; background:#0003; border-radius:15px; padding:8px; }
-        .cell { width:var(--c); height:var(--c); background:#fff1; border-radius:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; }
-        .gem { width:var(--g); height:var(--g); border-radius:10px; box-shadow:0 4px 15px #0003; transition:all .6s ease-out; position:relative; }
+        .cell { width:var(--c); height:var(--c); background:#fff1; border-radius:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; position:relative; }
+        .gem { width:var(--g); height:var(--g); border-radius:10px; box-shadow:0 4px 15px #0003; transition:all .6s cubic-bezier(.2,.8,.3,1); position:relative; z-index:1; }
         .gem::after { content:''; position:absolute; inset:2px; background:linear-gradient(135deg,#fff4,transparent); border-radius:8px; }
-        .gem.selected { transform:scale(1.3); box-shadow:0 0 30px gold; z-index:10; }
+        .gem.selected { transform:scale(1.35); box-shadow:0 0 35px gold, 0 0 60px #ff0; z-index:10; }
 
         .gem-1 { background:linear-gradient(135deg,#FF6B6B,#FF8E8E); }
         .gem-2 { background:linear-gradient(135deg,#4ECDC4,#88D9E6); }
@@ -36,20 +36,26 @@
 
         @keyframes p { 0%,100% {transform:scale(1)} 50% {transform:scale(1.1)} }
         @keyframes e { to {transform:scale(0);opacity:0} }
-        @keyframes f { from {transform:translateY(-200px);opacity:0} to {transform:translateY(0);opacity:1} }
-        @keyframes s { 0% {transform:scale(0) rotate(-270deg);opacity:0} 70% {transform:scale(1.15)} 100% {transform:scale(1);opacity:1} }
+        @keyframes f { from {transform:translateY(-250px);opacity:0} to {transform:translateY(0);opacity:1} }
+        @keyframes s { 0% {transform:scale(0) rotate(-360deg);opacity:0} 70% {transform:scale(1.2)} 100% {transform:scale(1);opacity:1} }
+        @keyframes shine { 0% {box-shadow:0 0 20px gold} 100% {box-shadow:0 0 40px #ff0, 0 0 60px #ff0} }
+        @keyframes particle { 0% {transform:scale(1);opacity:1} 100% {transform:translate(var(--tx),var(--ty)) scale(0);opacity:0} }
 
-        .gem.exploding { animation:e .6s ease-out forwards; }
-        .gem.falling { animation:f .7s cubic-bezier(.2,.8,.3,1); }
-        .gem.spawning { animation:s .6s cubic-bezier(.2,.8,.3,1); }
+        .gem.exploding { animation:e .7s cubic-bezier(.2,.8,.3,1) forwards; }
+        .gem.falling { animation:f .8s cubic-bezier(.2,.8,.3,1); }
+        .gem.spawning { animation:s .7s cubic-bezier(.2,.8,.3,1); }
+        .gem.shine { animation:shine .6s ease-out; }
 
-        .controls { display:flex; gap:12px; margin-top:15px; flex-wrap:wrap; justify-content:center; }
-        .btn { padding:12px 20px; border:none; border-radius:20px; font-weight:bold; cursor:pointer; background:linear-gradient(135deg,#FF6B6B,#FF8E8E); color:#fff; box-shadow:0 8px 20px #f661; transition:all .3s; font-size:13px; }
+        .particle { position:absolute; width:6px; height:6px; background:gold; border-radius:50%; pointer-events:none; z-index:100; animation:particle .9s ease-out forwards; }
+
+        .controls { display:flex; gap:10px; margin-top:15px; flex-wrap:wrap; justify-content:center; }
+        .btn { padding:12px 18px; border:none; border-radius:20px; font-weight:bold; cursor:pointer; background:linear-gradient(135deg,#FF6B6B,#FF8E8E); color:#fff; box-shadow:0 8px 20px #f661; transition:all .3s; font-size:13px; }
         .btn:hover { transform:translateY(-2px); }
         .btn-premium { background:linear-gradient(135deg,#FFD166,#FFE8A3); color:#333; }
         .btn-leader { background:linear-gradient(135deg,#4ECDC4,#88D9E6); }
+        .btn-bonus { background:linear-gradient(135deg,#06D6A0,#6AFFD6); }
 
-        .progress-bar { height:12px; background:linear-gradient(90deg,#FF6B6B,#4ECDC4,#118AB2); border-radius:10px; width:0%; transition:width .6s ease; }
+        .progress-bar { height:12px; background:linear-gradient(90deg,#FF6B6B,#4ECDC4,#118AB2); border-radius:10px; width:0%; transition:width .7s ease; }
 
         .modal { position:fixed; inset:0; background:#0008; display:flex; align-items:center; justify-content:center; z-index:1000; backdrop-filter:blur(10px); }
         .modal-content { background:var(--bg); padding:30px; border-radius:25px; text-align:center; max-width:90%; box-shadow:0 25px 50px #0005; animation:m .5s; max-height:80vh; overflow-y:auto; }
@@ -58,8 +64,11 @@
         .lb-item { display:flex; justify-content:space-between; padding:10px 15px; background:#fff1; border-radius:12px; margin:6px 0; font-weight:bold; }
         .lb-rank { font-size:18px; color:#FFD166; }
 
+        .bonus-popup { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:linear-gradient(135deg,#FFD166,#FF6B6B); color:#333; padding:20px 30px; border-radius:20px; font-weight:bold; font-size:18px; box-shadow:0 20px 40px #0005; z-index:2000; animation:bonus-pop .8s; }
+        @keyframes bonus-pop { 0% {transform:translate(-50%,-50%) scale(0.5);opacity:0} 60% {transform:translate(-50%,-50%) scale(1.1)} 100% {transform:translate(-50%,-50%) scale(1);opacity:1} }
+
         .hidden { display:none; }
-        @media (max-width:500px) { :root {--c:35px;--g:28px} .btn {padding:10px 16px;font-size:12px;} }
+        @media (max-width:500px) { :root {--c:35px;--g:28px} .btn {padding:10px 14px;font-size:12px;} }
     </style>
 </head>
 <body>
@@ -67,7 +76,7 @@
 <div id="loader">
     <div class="logo"></div>
     <div style="font-size:18px;font-weight:bold;background:linear-gradient(90deg,#FFD166,#FF6B6B);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
-        CRYSTAL MATCH
+        CRYSTAL MATCH PRO
     </div>
     <div class="loader-bar"><div class="loader-fill" id="fill"></div></div>
 </div>
@@ -94,6 +103,7 @@
     </div>
 
     <div class="controls">
+        <button class="btn btn-bonus" id="bonus">Бонус</button>
         <button class="btn" id="hint">Подсказка</button>
         <button class="btn btn-leader" id="leader">ТОП-10</button>
         <button class="btn btn-premium" id="prem">ПРЕМИУМ</button>
@@ -132,14 +142,51 @@ const el = {
     lv:document.getElementById('lvl'), tg:document.getElementById('target'),
     cb:document.getElementById('combo'), pr:document.getElementById('prog'),
     win:document.getElementById('win'), fs:document.getElementById('fscore'),
-    hint:document.getElementById('hint'), prem:document.getElementById('prem'),
-    leader:document.getElementById('leader'), rest:document.getElementById('restart'),
-    next:document.getElementById('next'), lbModal:document.getElementById('lb-modal'),
-    lbList:document.getElementById('lb-list'), closeLb:document.getElementById('close-lb')
+    bonus:document.getElementById('bonus'), hint:document.getElementById('hint'),
+    leader:document.getElementById('leader'), prem:document.getElementById('prem'),
+    rest:document.getElementById('restart'), next:document.getElementById('next'),
+    lbModal:document.getElementById('lb-modal'), lbList:document.getElementById('lb-list'),
+    closeLb:document.getElementById('close-lb')
 };
 
 function rnd(){return Math.floor(Math.random()*T)+1}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+
+// === ЕЖЕДНЕВНЫЕ БОНУСЫ ===
+const BONUS = {
+    key: 'crystalBonus',
+    get(){ return JSON.parse(localStorage.getItem(this.key) || '{"last":0,"streak":0}'); },
+    save(d){ localStorage.setItem(this.key, JSON.stringify(d)); },
+    check(){
+        const now = Date.now();
+        const data = this.get();
+        const day = 24*60*60*1000;
+        if (now - data.last > day) {
+            const streak = (now - data.last < day*2) ? data.streak + 1 : 1;
+            this.save({last: now, streak});
+            return {moves:5, score:500, streak};
+        }
+        return null;
+    },
+    claim(){
+        const bonus = this.check();
+        if (!bonus) return false;
+        st.mv += bonus.moves;
+        st.sc += bonus.score;
+        if (bonus.streak >= 3) st.sc += 1000;
+        ui(); save(); LB.add(st.sc);
+        showBonusPopup(`+${bonus.moves} ходов! +${bonus.score} очков!${bonus.streak>=3?' +1000 за серию!':''}`);
+        return true;
+    }
+};
+
+function showBonusPopup(text){
+    const popup = document.createElement('div');
+    popup.className = 'bonus-popup';
+    popup.textContent = text;
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 2000);
+}
 
 // === ЛИДЕРБОРД ===
 const LB = {
@@ -158,7 +205,7 @@ const LB = {
             <div class="lb-item">
                 <span class="lb-rank">${i+1}.</span>
                 <span>${e.name}</span>
-                <span>${e.score} очков</span>
+                <span>${e.score}</span>
             </div>
         `).join('') : '<p style="opacity:.6">Пока нет рекордов</p>';
     }
@@ -170,6 +217,23 @@ function load(){
     const s = localStorage.getItem('crystalSave');
     if(s){ const d=JSON.parse(s); st.lv=d.lv||1; st.sc=d.sc||0; st.mv=d.mv||MOVES[st.lv-1]||25; st.tg=d.tg||TARGETS[st.lv-1]||1000; }
     else { st.tg=TARGETS[0]; st.mv=MOVES[0]; }
+}
+
+// === ЭФФЕКТЫ ===
+function createParticles(cell, color = 'gold'){
+    const r = cell.getBoundingClientRect();
+    const cx = r.left + r.width/2, cy = r.top + r.height/2;
+    for(let i=0;i<12;i++){
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.background = color;
+        p.style.left = cx + 'px'; p.style.top = cy + 'px';
+        const a = Math.random()*Math.PI*2, d = 40 + Math.random()*80;
+        p.style.setProperty('--tx', Math.cos(a)*d + 'px');
+        p.style.setProperty('--ty', Math.sin(a)*d + 'px');
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 900);
+    }
 }
 
 // === ИГРА ===
@@ -210,7 +274,10 @@ function click(r,c){
         st.an=true; swapGems(st.sel,g).then(ok=>{if(ok){st.mv--;ui();win();save();LB.add(st.sc)};st.sel=null;st.an=false});
     }else{clear();st.sel=g;sel(r,c)}
 }
-function sel(r,c){document.querySelector(`[data-r="${r}"][data-c="${c}"] .gem`)?.classList.add('selected')}
+function sel(r,c){
+    const gem = document.querySelector(`[data-r="${r}"][data-c="${c}"] .gem`);
+    if(gem) { gem.classList.add('selected'); gem.classList.add('shine'); setTimeout(()=>gem.classList.remove('shine'),600); }
+}
 function clear(){document.querySelectorAll('.gem.selected').forEach(e=>e.classList.remove('selected'))}
 
 async function swapGems(g1,g2){
@@ -223,7 +290,7 @@ async function swapGems(g1,g2){
     gem1.style.left=r1.left+'px'; gem1.style.top=r1.top+'px';
     gem2.style.left=r2.left+'px'; gem2.style.top=r2.top+'px';
     gem1.style.zIndex=gem2.style.zIndex=100;
-    requestAnimationFrame(()=>{gem1.style.transition='transform .6s ease-out'; gem2.style.transition='transform .6s ease-out';
+    requestAnimationFrame(()=>{gem1.style.transition='transform .6s cubic-bezier(.2,.8,.3,1)'; gem2.style.transition='transform .6s cubic-bezier(.2,.8,.3,1)';
         gem1.style.transform=`translate(${dx}px,${dy}px)`; gem2.style.transform=`translate(${-dx}px,${-dy}px)`});
     await sleep(600);
     swap(g1.r,g1.c,g2.r,g2.c); render();
@@ -254,15 +321,16 @@ async function proc(m){
             explode(rr,cc);
         }
     });
-    st.sc+=Math.floor(sc); await sleep(600);
+    st.sc+=Math.floor(sc); await sleep(700);
     await drop(); await spawn();
     const n=find(); if(n.length)await proc(n); else{st.cb=1;st.cm=1}
     ui(); save();
 }
 function explode(r,c){
-    const gem=document.querySelector(`[data-r="${r}"][data-c="${c}"] .gem`);
-    if(gem)gem.classList.add('exploding');
-    setTimeout(()=>{st.b[r][c]=0},400);
+    const cell = document.querySelector(`[data-r="${r}"][data-c="${c}"]`);
+    const gem = cell?.querySelector('.gem');
+    if(gem) { gem.classList.add('exploding'); createParticles(cell); }
+    setTimeout(()=>{st.b[r][c]=0},500);
 }
 async function drop(){
     let mv=false;
@@ -276,15 +344,15 @@ async function drop(){
             }
         }
     }
-    if(mv){render();await sleep(700)}
+    if(mv){render();await sleep(800)}
 }
 async function spawn(){
     let sp=false;
     for(let r=0;r<S;r++)for(let c=0;c<S;c++)if(!st.b[r][c]){
         st.b[r][c]=rnd(); sp=true;
-        setTimeout(()=>{document.querySelector(`[data-r="${r}"][data-c="${c}"] .gem`)?.classList.add('spawning')},100);
+        setTimeout(()=>{const gem=document.querySelector(`[data-r="${r}"][data-c="${c}"] .gem`); if(gem){gem.classList.add('spawning'); createParticles(document.querySelector(`[data-r="${r}"][data-c="${c}"]`), '#4ECDC4');}},100);
     }
-    if(sp){render();await sleep(600)}
+    if(sp){render();await sleep(700)}
 }
 
 function ui(){
@@ -304,6 +372,7 @@ function next(){
 function reset(){
     if(!confirm('Сбросить весь прогресс?')) return;
     localStorage.removeItem('crystalSave');
+    localStorage.removeItem('crystalBonus');
     st.lv=1; st.sc=0; st.mv=25; st.tg=1000; st.cb=1; st.cm=1; st.st=false;
     initBoard(); render(); ui();
 }
@@ -320,15 +389,16 @@ document.addEventListener('touchend', e => {
 load();
 let p=0;
 const iv=setInterval(()=>{
-    p+=30; el.f.style.width=Math.min(p,100)+'%';
+    p+=35; el.f.style.width=Math.min(p,100)+'%';
     if(p>=100){clearInterval(iv);
         initBoard(); render(); ui();
         el.g.style.display='flex'; el.l.style.opacity='0';
-        setTimeout(()=>el.l.remove(),600);
+        setTimeout(()=>{el.l.remove(); BONUS.claim();},600);
     }
-},70);
+},60);
 
 /* КНОПКИ */
+el.bonus.onclick=()=>{ if(!BONUS.claim()) alert('Бонус уже получен!'); };
 el.hint.onclick=()=>{/* подсказка */};
 el.rest.onclick=reset;
 el.next.onclick=next;
