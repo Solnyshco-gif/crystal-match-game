@@ -5,13 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crystal Match Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="preload" href="assets/sounds/explode.mp3" as="audio">
     <style>
         :root { --bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%); --cell: 45px; --gem: 35px; }
         * { margin:0; padding:0; box-sizing:border-box; user-select:none; }
         body { background: var(--bg); color:white; font-family:'Arial',sans-serif; overflow:hidden; height:100vh; }
 
-        /* === LOADER === */
+        /* LOADER */
         #loader { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; transition:opacity .6s; }
         .logo { width:80px; height:80px; background:radial-gradient(circle, #FFD166, #FF6B6B); border-radius:50%; box-shadow:0 0 30px rgba(255,215,102,.8); animation:pulse 1.5s infinite; }
         .loader-text { font-size:18px; font-weight:bold; background:linear-gradient(90deg,#FFD166,#FF6B6B); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
@@ -30,20 +29,30 @@
         .gem::after { content:''; position:absolute; top:2px; left:2px; right:2px; bottom:2px; background:linear-gradient(135deg,rgba(255,255,255,.4),transparent); border-radius:8px; }
         .gem.selected { transform:scale(1.2); box-shadow:0 0 25px gold; z-index:10; }
 
-        /* === СПЕЦКРИСТАЛЛЫ === */
-        .gem-bomb { background:radial-gradient(circle, #FF3B3B, #FF8E8E); }
-        .gem-rainbow { background:conic-gradient(#FF6B6B, #4ECDC4, #FFD166, #06D6A0, #118AB2, #9B5DE5, #F15BB5); animation:spin 2s linear infinite; }
-        .gem-lightning { background:linear-gradient(135deg, #FFD700, #FFA500); box-shadow:0 0 20px gold; }
+        .gem-1 { background:linear-gradient(135deg,#FF6B6B,#FF8E8E); }
+        .gem-2 { background:linear-gradient(135deg,#4ECDC4,#88D9E6); }
+        .gem-3 { background:linear-gradient(135deg,#FFD166,#FFE8A3); }
+        .gem-4 { background:linear-gradient(135deg,#06D6A0,#6AFFD6); }
+        .gem-5 { background:linear-gradient(135deg,#118AB2,#5BC0EB); }
+        .gem-6 { background:linear-gradient(135deg,#9B5DE5,#C78FFF); }
+        .gem-7 { background:linear-gradient(135deg,#F15BB5,#FFA8E0); }
+        .gem-bomb { background:radial-gradient(circle,#FF3B3B,#FF8E8E); animation:pulse 1.5s infinite; }
+        .gem-rainbow { background:conic-gradient(#FF6B6B,#4ECDC4,#FFD166,#06D6A0,#118AB2,#9B5DE5,#F15BB5); animation:spin 2s linear infinite; }
+        .gem-lightning { background:linear-gradient(135deg,#FFD700,#FFA500); box-shadow:0 0 20px gold; animation:pulse 1s infinite; }
 
         @keyframes spin { to { transform:rotate(360deg); } }
         @keyframes pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.1); } }
         @keyframes explode { to { transform:scale(0); opacity:0; } }
         @keyframes fall { from { transform:translateY(-150px); opacity:0; } to { transform:translateY(0); opacity:1; } }
         @keyframes spawn { 0% { transform:scale(0) rotate(-180deg); } 70% { transform:scale(1.1); } 100% { transform:scale(1); } }
+        @keyframes combo-pop { 0% { transform:translate(-50%,-50%) scale(0.5); opacity:0; } 50% { transform:translate(-50%,-50%) scale(1.2); opacity:1; } 100% { transform:translate(-50%,-120%) scale(0.8); opacity:0; } }
+        @keyframes particle { to { transform:translate(var(--tx),var(--ty)) scale(0); opacity:0; } }
 
         .gem.exploding { animation:explode .5s ease-out forwards; }
         .gem.falling { animation:fall .5s ease-in; }
         .gem.spawning { animation:spawn .5s ease-out; }
+        .combo-popup { position:absolute; font-weight:bold; color:gold; font-size:22px; pointer-events:none; z-index:100; animation:combo-pop 1s ease-out forwards; }
+        .particle { position:absolute; width:6px; height:6px; border-radius:50%; pointer-events:none; animation:particle .8s ease-out forwards; }
 
         .controls { display:flex; gap:15px; margin-top:15px; }
         .btn { padding:12px 25px; border:none; border-radius:20px; font-weight:bold; cursor:pointer; transition:all .3s; }
@@ -123,10 +132,6 @@
     </div>
 </div>
 
-<!-- MODULES -->
-<script src="modules/sounds.js"></script>
-<script src="modules/leaderboard.js"></script>
-
 <script>
 /* ========================================
    MAIN
@@ -154,6 +159,37 @@ const el = {
     hintBtn: document.getElementById('hint-btn'), premiumBtn: document.getElementById('premium-btn'),
     lbBtn: document.getElementById('leaderboard-btn'), restartBtn: document.getElementById('restart-btn'),
     nextBtn: document.getElementById('next-level-btn'), closeLb: document.getElementById('close-lb')
+};
+
+/* ========================================
+   SOUNDS (встроенные)
+   ======================================== */
+const Sounds = {
+    play(name) {
+        const audio = new Audio();
+        audio.src = `data:audio/mp3;base64,${name === 'click' ? 'UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU'+name === 'swap' ? '...' : ''}`; // Заглушка
+        audio.volume = 0.3;
+        audio.play().catch(() => {});
+    }
+};
+function playSound(name) { Sounds.play(name); }
+
+/* ========================================
+   LEADERBOARD (встроенный)
+   ======================================== */
+const Leaderboard = {
+    data: JSON.parse(localStorage.getItem('crystalLB') || '[]'),
+    add(name, score) {
+        this.data.push({ name, score, date: new Date().toLocaleDateString() });
+        this.data.sort((a,b) => b.score - a.score);
+        this.data = this.data.slice(0, 10);
+        localStorage.setItem('crystalLB', JSON.stringify(this.data));
+    },
+    show(container) {
+        container.innerHTML = this.data.length ? this.data.map((e,i) => `
+            <div class="lb-item"><span>${i+1}. ${e.name}</span><span>${e.score}</span></div>
+        `).join('') : '<p>Нет рекордов</p>';
+    }
 };
 
 /* ========================================
@@ -201,12 +237,9 @@ function handleClick(r, c) {
 
     const gem = { r, c, type: state.board[r][c] };
     if (!state.selected) {
-        state.selected = gem;
-        selectGem(r, c);
-        playSound('click');
+        state.selected = gem; selectGem(r, c); playSound('click');
     } else if (isNeighbor(state.selected, gem)) {
-        state.animating = true;
-        playSound('swap');
+        state.animating = true; playSound('swap');
         swapGems(state.selected, gem).then(ok => {
             if (ok) { state.moves--; updateUI(); checkWin(); }
             state.selected = null; state.animating = false;
@@ -217,19 +250,9 @@ function handleClick(r, c) {
 }
 
 function isNeighbor(a, b) { return Math.abs(a.r - b.r) + Math.abs(a.c - b.c) === 1; }
+function selectGem(r, c) { const g = document.querySelector(`[data-r="${r}"][data-c="${c}"] .gem`); if (g) g.classList.add('selected'); }
+function clearSelection() { document.querySelectorAll('.gem.selected').forEach(g => g.classList.remove('selected')); }
 
-function selectGem(r, c) {
-    const gem = document.querySelector(`[data-r="${r}"][data-c="${c}"] .gem`);
-    if (gem) gem.classList.add('selected');
-}
-
-function clearSelection() {
-    document.querySelectorAll('.gem.selected').forEach(g => g.classList.remove('selected'));
-}
-
-/* ========================================
-   ANIMATIONS & SPECIAL GEMS
-   ======================================== */
 async function swapGems(g1, g2) {
     const c1 = document.querySelector(`[data-r="${g1.r}"][data-c="${g1.c}"]`);
     const c2 = document.querySelector(`[data-r="${g2.r}"][data-c="${g2.c}"]`);
@@ -268,11 +291,7 @@ function findMatches() {
         for (let c = 0; c < BOARD_SIZE; c++) {
             if (visited[r][c] || !state.board[r][c]) continue;
             const t = state.board[r][c];
-            if (t === 'rainbow') {
-                matches.push({r, c, len: 1, hor: true, t: 'rainbow'});
-                visited[r][c] = true;
-                continue;
-            }
+            if (t === 'rainbow') { matches.push({r, c, len: 1, hor: true, t: 'rainbow'}); visited[r][c] = true; continue; }
             let h = 1, v = 1;
             while (c + h < BOARD_SIZE && state.board[r][c + h] === t) h++;
             while (r + v < BOARD_SIZE && state.board[r + v][c] === t) v++;
@@ -289,17 +308,15 @@ async function processMatches(matches) {
 
     matches.forEach(m => {
         if (m.t === 'bomb') {
-            for (let dr = -1; dr <= 1; dr++)
-                for (let dc = -1; dc <= 1; dc++) {
-                    const nr = m.r + dr, nc = m.c + dc;
-                    if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) toRemove.add(`${nr},${nc}`);
-                }
+            for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+                const nr = m.r + dr, nc = m.c + dc;
+                if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) toRemove.add(`${nr},${nc}`);
+            }
             score += 500 * state.combo;
         } else if (m.t === 'rainbow') {
-            const color = state.board[m.r][m.c - 1] || state.board[m.r][m.c + 1] || state.board[m.r - 1]?.[m.c] || 1;
-            for (let r = 0; r < BOARD_SIZE; r++)
-                for (let c = 0; c < BOARD_SIZE; c++)
-                    if (state.board[r][c] === color) toRemove.add(`${r},${c}`);
+            const color = state.board[m.r][m.c-1] || state.board[m.r][m.c+1] || state.board[m.r-1]?.[m.c] || 1;
+            for (let r = 0; r < BOARD_SIZE; r++) for (let c = 0; c < BOARD_SIZE; c++)
+                if (state.board[r][c] === color) toRemove.add(`${r},${c}`);
             score += 1000 * state.combo;
         } else if (m.t === 'lightning') {
             for (let r = 0; r < BOARD_SIZE; r++) toRemove.add(`${r},${m.c}`);
@@ -315,11 +332,7 @@ async function processMatches(matches) {
         showCombo(m);
     });
 
-    toRemove.forEach(key => {
-        const [r, c] = key.split(',').map(Number);
-        explodeGem(r, c);
-    });
-
+    toRemove.forEach(key => { const [r, c] = key.split(',').map(Number); explodeGem(r, c); });
     state.score += Math.floor(score);
     playSound('explode');
     if (state.combo > 2) playSound('combo');
@@ -333,15 +346,150 @@ async function processMatches(matches) {
     saveProgress();
 }
 
-/* Остальные функции (explodeGem, dropGems, spawnGems, etc.) — как в предыдущей версии */
-function explodeGem(r, c) { /* ... */ }
-function dropGems() { /* ... */ }
-function spawnGems() { /* ... */ }
-function showCombo(m) { /* ... */ }
+function explodeGem(r, c) {
+    const cell = document.querySelector(`[data-r="${r}"][data-c="${c}"]`);
+    if (!cell) return;
+    const gem = cell.querySelector('.gem');
+    gem.classList.add('exploding');
+    createParticles(cell);
+    setTimeout(() => { state.board[r][c] = 0; }, 300);
+}
 
-/* ========================================
-   SAVE & LOAD
-   ======================================== */
+function createParticles(cell) {
+    const r = cell.getBoundingClientRect();
+    const cx = r.left + r.width/2, cy = r.top + r.height/2;
+    for (let i = 0; i < 10; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.background = getComputedStyle(cell.querySelector('.gem')).background;
+        p.style.left = cx + 'px'; p.style.top = cy + 'px';
+        const a = Math.random() * Math.PI * 2, d = 30 + Math.random() * 60;
+        p.style.setProperty('--tx', Math.cos(a)*d + 'px');
+        p.style.setProperty('--ty', Math.sin(a)*d + 'px');
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 800);
+    }
+}
+
+function showCombo(m) {
+    const cell = document.querySelector(`[data-r="${m.r}"][data-c="${m.c}"]`);
+    if (!cell) return;
+    const r = cell.getBoundingClientRect();
+    const pop = document.createElement('div');
+    pop.className = 'combo-popup';
+    pop.textContent = `x${state.combo}!`;
+    pop.style.left = (r.left + r.width/2) + 'px';
+    pop.style.top = (r.top + r.height/2) + 'px';
+    document.body.appendChild(pop);
+    setTimeout(() => pop.remove(), 1000);
+}
+
+async function dropGems() {
+    let moved = false;
+    for (let c = 0; c < BOARD_SIZE; c++) {
+        let wp = BOARD_SIZE - 1;
+        for (let r = BOARD_SIZE - 1; r >= 0; r--) {
+            if (state.board[r][c]) {
+                if (r !== wp) {
+                    state.board[wp][c] = state.board[r][c];
+                    state.board[r][c] = 0;
+                    moved = true;
+                    setTimeout(() => {
+                        const gem = document.querySelector(`[data-r="${wp}"][data-c="${c}"] .gem`);
+                        if (gem) gem.classList.add('falling');
+                    }, 50);
+                }
+                wp--;
+            }
+        }
+    }
+    if (moved) { renderBoard(); await sleep(500); }
+}
+
+async function spawnGems() {
+    let spawned = false;
+    for (let r = 0; r < BOARD_SIZE; r++)
+        for (let c = 0; c < BOARD_SIZE; c++)
+            if (state.board[r][c] === 0) {
+                state.board[r][c] = Math.floor(Math.random() * GEM_TYPES) + 1;
+                spawned = true;
+                setTimeout(() => {
+                    const gem = document.querySelector(`[data-r="${r}"][data-c="${c}"] .gem`);
+                    if (gem) gem.classList.add('spawning');
+                }, 100);
+            }
+    if (spawned) { renderBoard(); await sleep(500); }
+}
+
+function hasPossibleMoves() {
+    for (let r = 0; r < BOARD_SIZE; r++)
+        for (let c = 0; c < BOARD_SIZE; c++) {
+            if (c < BOARD_SIZE-1 && testSwap(r,c,r,c+1)) return true;
+            if (r < BOARD_SIZE-1 && testSwap(r,c,r+1,c)) return true;
+        }
+    return false;
+}
+function testSwap(r1,c1,r2,c2) {
+    [state.board[r1][c1], state.board[r2][c2]] = [state.board[r2][c2], state.board[r1][c1]];
+    const ok = findMatches().length > 0;
+    [state.board[r1][c1], state.board[r2][c2]] = [state.board[r2][c2], state.board[r1][c1]];
+    return ok;
+}
+
+function updateUI() {
+    el.score.textContent = state.score;
+    el.moves.textContent = state.moves;
+    el.level.textContent = state.level;
+    el.target.textContent = state.target;
+    el.combo.textContent = `x${state.combo}`;
+    el.progress.style.width = Math.min(state.score / state.target * 100, 100) + '%';
+}
+
+function checkWin() {
+    if (state.started && state.score >= state.target) {
+        playSound('win');
+        showWin();
+    } else if (state.moves <= 0 && state.started) {
+        setTimeout(() => { alert('Ходы закончились!'); resetGame(); }, 500);
+    }
+}
+
+function showWin() {
+    el.finalScore.textContent = state.score;
+    el.finalCombo.textContent = state.combo;
+    el.winModal.classList.remove('hidden');
+}
+
+function nextLevel() {
+    state.level++;
+    state.target = LEVEL_TARGETS[state.level-1] || state.level * 2000;
+    state.moves = LEVEL_MOVES[state.level-1] || 15;
+    state.score = 0; state.combo = 1; state.comboMul = 1; state.started = false;
+    createBoard(); renderBoard(); updateUI();
+    el.winModal.classList.add('hidden');
+}
+
+function resetGame() {
+    state.score = 0; state.moves = LEVEL_MOVES[state.level-1] || 25;
+    state.combo = 1; state.comboMul = 1; state.started = false;
+    createBoard(); renderBoard(); updateUI();
+    el.winModal.classList.add('hidden');
+}
+
+function showHint() {
+    if (state.animating || state.moves <= 0) return;
+    for (let r = 0; r < BOARD_SIZE; r++)
+        for (let c = 0; c < BOARD_SIZE; c++) {
+            if (c < BOARD_SIZE-1 && testSwap(r,c,r,c+1)) { pulse(r,c,r,c+1); return; }
+            if (r < BOARD_SIZE-1 && testSwap(r,c,r+1,c)) { pulse(r,c,r+1,c); return; }
+        }
+}
+function pulse(r1,c1,r2,c2) {
+    const cells = [document.querySelector(`[data-r="${r1}"][data-c="${c1}"]`), document.querySelector(`[data-r="${r2}"][data-c="${c2}"]`)];
+    cells.forEach(cell => cell && (cell.style.animation = 'pulse 1s infinite'));
+    setTimeout(() => cells.forEach(cell => cell && (cell.style.animation = '')), 2000);
+}
+
 function saveProgress() {
     const save = { score: state.score, level: state.level, moves: state.moves, name: state.name };
     localStorage.setItem('crystalMatchSave', JSON.stringify(save));
@@ -360,6 +508,8 @@ function loadProgress() {
     state.target = LEVEL_TARGETS[state.level-1] || state.level * 2000;
 }
 
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
 /* ========================================
    INIT
    ======================================== */
@@ -377,9 +527,9 @@ const interval = setInterval(() => {
     }
 }, 150);
 
-/* События */
+/* EVENTS */
 el.hintBtn.onclick = showHint;
-el.restartBtn.onclick = () => { if (confirm('Начать заново?')) resetGame(); };
+el.restartBtn.onclick = () => confirm('Начать заново?') && resetGame();
 el.nextBtn.onclick = nextLevel;
 el.lbBtn.onclick = () => { Leaderboard.show(el.lbList); el.lbModal.classList.remove('hidden'); };
 el.closeLb.onclick = () => el.lbModal.classList.add('hidden');
