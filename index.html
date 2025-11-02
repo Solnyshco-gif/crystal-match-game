@@ -2,21 +2,19 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Crystal Match</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root { --bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%); --c:45px; --g:35px; }
-        * { margin:0; padding:0; box-sizing:border-box; user-select:none; }
+        * { margin:0; padding:0; box-sizing:border-box; user-select:none; touch-action: manipulation; }
         body { background:var(--bg); color:#fff; font-family:Arial; overflow:hidden; height:100vh; }
 
-        /* LOADER */
         #loader { position:fixed; inset:0; background:var(--bg); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; transition:opacity .6s; }
         .logo { width:80px; height:80px; background:radial-gradient(#FFD166,#FF6B6B); border-radius:50%; box-shadow:0 0 30px #FFD166; animation:p 1.5s infinite; }
         .loader-bar { width:200px; height:4px; background:#fff3; border-radius:2px; overflow:hidden; }
         .loader-fill { height:100%; background:#FFD166; width:0%; transition:width .3s; }
 
-        /* GAME */
         .container { display:none; flex-direction:column; align-items:center; padding:10px; height:100%; }
         .header { display:flex; justify-content:space-between; width:100%; max-width:500px; background:#fff1; backdrop-filter:blur(10px); border-radius:20px; padding:15px; box-shadow:0 8px 32px #0003; }
         .stats { display:flex; flex-direction:column; gap:5px; font-weight:bold; font-size:14px; }
@@ -127,6 +125,26 @@ const el = {
 function rnd(){return Math.floor(Math.random()*T)+1}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 
+// === СОХРАНЕНИЕ ===
+function save(){
+    const data = {lv:st.lv, sc:st.sc, mv:st.mv, tg:st.tg};
+    localStorage.setItem('crystalSave', JSON.stringify(data));
+}
+function load(){
+    const saved = localStorage.getItem('crystalSave');
+    if(saved){
+        const d = JSON.parse(saved);
+        st.lv = d.lv || 1;
+        st.sc = d.sc || 0;
+        st.mv = d.mv || MOVES[st.lv-1] || 25;
+        st.tg = d.tg || TARGETS[st.lv-1] || 1000;
+    } else {
+        st.tg = TARGETS[0];
+        st.mv = MOVES[0];
+    }
+}
+
+// === ИГРА ===
 function initBoard(){
     st.b=Array(S).fill().map(()=>Array(S).fill(0));
     for(let r=0;r<S;r++)for(let c=0;c<S;c++){
@@ -161,7 +179,7 @@ function click(r,c){
     const g={r,c,t:st.b[r][c]};
     if(!st.sel){st.sel=g;sel(r,c)}
     else if(Math.abs(g.r-st.sel.r)+Math.abs(g.c-st.sel.c)==1){
-        st.an=true; swapGems(st.sel,g).then(ok=>{if(ok){st.mv--;ui();win()};st.sel=null;st.an=false});
+        st.an=true; swapGems(st.sel,g).then(ok=>{if(ok){st.mv--;ui();win();save()};st.sel=null;st.an=false});
     }else{clear();st.sel=g;sel(r,c)}
 }
 function sel(r,c){document.querySelector(`[data-r="${r}"][data-c="${c}"] .gem`)?.classList.add('selected')}
@@ -210,7 +228,7 @@ async function proc(m){
     st.sc+=Math.floor(sc); await sleep(600);
     await drop(); await spawn();
     const n=find(); if(n.length)await proc(n); else{st.cb=1;st.cm=1}
-    ui();
+    ui(); save();
 }
 function explode(r,c){
     const gem=document.querySelector(`[data-r="${r}"][data-c="${c}"] .gem`);
@@ -252,24 +270,38 @@ function win(){
 function next(){
     st.lv++; st.tg=TARGETS[st.lv-1]||st.lv*2000;
     st.mv=MOVES[st.lv-1]||15; st.sc=0; st.cb=1; st.cm=1; st.st=false;
-    initBoard(); render(); ui(); el.win.classList.add('hidden');
+    initBoard(); render(); ui(); save(); el.win.classList.add('hidden');
 }
-function reset(){st.sc=0;st.mv=MOVES[st.lv-1]||25;st.cb=1;st.cm=1;st.st=false;initBoard();render();ui();el.win.classList.add('hidden')}
+function reset(){
+    if(!confirm('Сбросить прогресс?')) return;
+    localStorage.removeItem('crystalSave');
+    st.lv=1; st.sc=0; st.mv=25; st.tg=1000; st.cb=1; st.cm=1; st.st=false;
+    initBoard(); render(); ui();
+}
+
+/* ЗАЩИТА ОТ ЗУМА */
+let lastTouch = 0;
+document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTouch < 300) e.preventDefault();
+    lastTouch = now;
+}, { passive: false });
 
 /* ЗАГРУЗКА */
+load();
 let p=0;
 const iv=setInterval(()=>{
-    p+=20; el.f.style.width=Math.min(p,100)+'%';
+    p+=25; el.f.style.width=Math.min(p,100)+'%';
     if(p>=100){clearInterval(iv);
         initBoard(); render(); ui();
         el.g.style.display='flex'; el.l.style.opacity='0';
         setTimeout(()=>el.l.remove(),600);
     }
-},100);
+},80);
 
 /* КНОПКИ */
-el.hint.onclick=()=>{/* подсказка — можно дописать */};
-el.rest.onclick=()=>{if(confirm('Заново?'))reset()};
+el.hint.onclick=()=>{/* подсказка */};
+el.rest.onclick=reset;
 el.next.onclick=next;
 el.prem.onclick=()=>tg.showPopup({title:'Премиум',message:'Без рекламы!',buttons:[{type:'default',text:'299₽/мес'},{type:'cancel'}]});
 
